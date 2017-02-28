@@ -28,9 +28,8 @@ class FxBar extends Component {
         this.props.fvalue.v = event.target.innerText;
         this.props.getfvalue(this.props.fvalue);
     }
-    
+
     funcBlur = () => {
-        debugger;
         var row = Number(this.props.fvalue.r);
         var col = Number(this.props.fvalue.c);
         this.props.fxblur(row, col, this.props.fvalue.v)
