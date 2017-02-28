@@ -2,16 +2,19 @@ import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import axios from 'axios';
 
+import FxBar from './components/fxBar'
 const urla = 'http://localhost:5000/';
 
 class ActualData extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      data: []
+      data: [],
+      ftrans: {}
     };
     this.alpha = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
     this.prevValue = [];
+    this.interval;
   }
 
   componentWillMount() {
@@ -22,6 +25,17 @@ class ActualData extends Component {
     axios.get('src/jsonData/mainData.json')
       .then(data => {
         this.setState({ data: data.data });
+        var dupdata = this.state.data;
+        for(var i=0;i<dupdata.length;i++)
+        {
+          for(var j=0;j<dupdata[i].length;j++)
+          {
+            if(dupdata[i][j]['url'].length>0)
+            {
+              this.checkBlur(i,j,dupdata[i][j]['url']);
+            }
+          } 
+        }
       });
   }
 
@@ -153,6 +167,56 @@ class ActualData extends Component {
     data[i][j]['value'] = ans;
 
     this.setState({ data });
+  }
+  
+   handleDoubleClick = (item) => {
+    var dupdata = this.state.data;
+    var colName = item.id[0];
+    var colNo = this.alpha.indexOf(colName);
+    var rowNo = Number(item.id.substr(1,item.id.length));
+    var val = "";
+    if(Object.keys(dupdata[rowNo - 1][colNo]['fx']).length > 0)
+    {
+      val = dupdata[rowNo - 1][colNo]['fx']['formula'];
+    }
+    else if(dupdata[rowNo - 1][colNo]['url'].length > 0)
+    {
+      val = dupdata[rowNo - 1][colNo]['url'];
+    }
+    else
+    {
+      val = dupdata[rowNo - 1][colNo]['value'];
+    }
+    this.setState({ftrans : {r:rowNo -1,c:colNo,v:val}});
+  }
+
+   handleChange = (item) => {
+    var dupdata = this.state.data;
+    var colName = item.id[0];
+    var colNo = this.alpha.indexOf(colName);
+    var rowNo = Number(item.id.substr(1,item.id.length));
+    var val = "";
+    if(Object.keys(dupdata[rowNo - 1][colNo]['fx']).length > 0)
+    {
+      val = dupdata[rowNo - 1][colNo]['fx']['formula'];
+    }
+    else if(dupdata[rowNo - 1][colNo]['url'].length > 0)
+    {
+      val = dupdata[rowNo - 1][colNo]['url'];
+    }
+    else
+    {
+      val = dupdata[rowNo - 1][colNo]['value'];
+    }
+    this.setState({ftrans : {r:rowNo -1,c:colNo,v:val}});
+  }
+
+  refCallback = (item) => {
+    if (item) {
+      item.contentEditable = true;
+      item.getDOMNode().ondblclick = this.handleDoubleClick.bind(this,item);
+      item.getDOMNode().onkeyup = this.handleChange.bind(this,item);
+    }
   }
 
   checkFocus = (event) => {
@@ -337,9 +401,9 @@ class ActualData extends Component {
             var urlTest = target.slice(4, target.indexOf(','));
             var timer = target.slice(target.indexOf(',') + 1, target.indexOf(')'));
             if (regex.test(urlTest)) {
-              this.writeUrl(i, j, target, timer);
+              this.writeUrl(i, j, target);
               this.runUrl(i, j);
-              setInterval(() => { this.runUrl(i, j) }, timer);
+              this.interval = setInterval(() => { this.runUrl(i, j) }, timer);
             }
             else {
               this.stringColor(i, j, target, "red");
@@ -352,6 +416,47 @@ class ActualData extends Component {
           }
         }
       }
+    }
+  }
+
+  writeUrl = (row,col,urlf) => {
+    var dupdata = this.state.data;
+    dupdata[row][col]["url"] = urlf;
+    this.setState({data: dupdata});
+  }
+
+  runUrl = (row,col) => {
+    var dupdata = this.state.data;
+    var target = dupdata[row][col]["url"];
+    var urlTest = target.slice(4,target.indexOf(','));
+    var timer = target.slice(target.indexOf(',')+1,target.indexOf(')'));
+    var response;
+    var me = this;
+    if(target.length > 0)
+    {
+      axios.get(urlTest)
+      .then(data => {
+        if(data['status'] == 200)
+        {
+          response = data['data']['a'];
+          dupdata[row][col]["value"] = response;
+          this.setState({data: dupdata});
+        }
+        else
+        {
+          dupdata[row][col]["value"] = "ERROR!";
+          dupdata[row][col]["url"] = "";
+          this.setState({data: dupdata});
+        }
+      })
+      .catch(function (error) {
+          console.log(error);
+          dupdata[row][col]["value"] = "ERROR!";
+          dupdata[row][col]["url"] = "";
+          dupdata[row][col]["color"] = "red";
+          me.setState({data: dupdata});
+          clearInterval(me.interval);
+      });
     }
   }
 
@@ -418,7 +523,8 @@ class ActualData extends Component {
             className={s}
             onFocus={this.checkFocus.bind(this)}
             onBlur={this.checkBlur.bind(this, i, j, "zaq")}
-          /*onClick={this.handleDoubleClick.bind(this)}*/
+            ref={this.refCallback}
+          
           >{dupdata[j]['value']}</td>
         );
       }
@@ -428,12 +534,23 @@ class ActualData extends Component {
     return b;
   }
 
+  fbarSet = (value) => {
+    var col = value.c;
+    var row = value.r;
+    var colName = this.alpha[col];
+    var rowNo = Number(row)+1;
+    var id = colName+rowNo;
+    var elem = document.getElementById(id);
+    elem.innerText = value.v;
+  }
+
   render() {
     return (
       <div>
         <button id="save" onClick={this.saveData.bind(this)}>SAVE</button>
         <button id="addRow" onClick={this.addRow.bind(this)}>ADD ROW</button>
         <button id="addCol" onClick={this.addColumn.bind(this)}>ADD COLUMN</button>
+        <FxBar fvalue={this.state.ftrans} getfvalue={this.fbarSet} fxblur={this.checkBlur}/>
         <table>
           <thead>{this.renderHead(this.state.data)}</thead>
           <tbody>{this.renderData(this.state.data)}</tbody>
