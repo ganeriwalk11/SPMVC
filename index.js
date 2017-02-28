@@ -26,15 +26,12 @@ class ActualData extends Component {
       .then(data => {
         this.setState({ data: data.data });
         var dupdata = this.state.data;
-        for(var i=0;i<dupdata.length;i++)
-        {
-          for(var j=0;j<dupdata[i].length;j++)
-          {
-            if(dupdata[i][j]['url'].length>0)
-            {
-              this.checkBlur(i,j,dupdata[i][j]['url']);
+        for (var i = 0; i < dupdata.length; i++) {
+          for (var j = 0; j < dupdata[i].length; j++) {
+            if (dupdata[i][j]['url'].length > 0) {
+              this.checkBlur(i, j, dupdata[i][j]['url']);
             }
-          } 
+          }
         }
       });
   }
@@ -168,54 +165,48 @@ class ActualData extends Component {
 
     this.setState({ data });
   }
-  
-   handleDoubleClick = (item) => {
+
+  handleDoubleClick = (item) => {
     var dupdata = this.state.data;
     var colName = item.id[0];
     var colNo = this.alpha.indexOf(colName);
-    var rowNo = Number(item.id.substr(1,item.id.length));
+    var rowNo = Number(item.id.substr(1, item.id.length));
     var val = "";
-    if(Object.keys(dupdata[rowNo - 1][colNo]['fx']).length > 0)
-    {
+    if (Object.keys(dupdata[rowNo - 1][colNo]['fx']).length > 0) {
       val = dupdata[rowNo - 1][colNo]['fx']['formula'];
     }
-    else if(dupdata[rowNo - 1][colNo]['url'].length > 0)
-    {
+    else if (dupdata[rowNo - 1][colNo]['url'].length > 0) {
       val = dupdata[rowNo - 1][colNo]['url'];
     }
-    else
-    {
+    else {
       val = dupdata[rowNo - 1][colNo]['value'];
     }
-    this.setState({ftrans : {r:rowNo -1,c:colNo,v:val}});
+    this.setState({ ftrans: { r: rowNo - 1, c: colNo, v: val } });
   }
 
-   handleChange = (item) => {
+  handleChange = (item) => {
     var dupdata = this.state.data;
     var colName = item.id[0];
     var colNo = this.alpha.indexOf(colName);
-    var rowNo = Number(item.id.substr(1,item.id.length));
+    var rowNo = Number(item.id.substr(1, item.id.length));
     var val = "";
-    if(Object.keys(dupdata[rowNo - 1][colNo]['fx']).length > 0)
-    {
+    if (Object.keys(dupdata[rowNo - 1][colNo]['fx']).length > 0) {
       val = dupdata[rowNo - 1][colNo]['fx']['formula'];
     }
-    else if(dupdata[rowNo - 1][colNo]['url'].length > 0)
-    {
+    else if (dupdata[rowNo - 1][colNo]['url'].length > 0) {
       val = dupdata[rowNo - 1][colNo]['url'];
     }
-    else
-    {
+    else {
       val = dupdata[rowNo - 1][colNo]['value'];
     }
-    this.setState({ftrans : {r:rowNo -1,c:colNo,v:val}});
+    this.setState({ ftrans: { r: rowNo - 1, c: colNo, v: val } });
   }
 
   refCallback = (item) => {
     if (item) {
       item.contentEditable = true;
-      item.getDOMNode().ondblclick = this.handleDoubleClick.bind(this,item);
-      item.getDOMNode().onkeyup = this.handleChange.bind(this,item);
+      item.getDOMNode().ondblclick = this.handleDoubleClick.bind(this, item);
+      item.getDOMNode().onkeyup = this.handleChange.bind(this, item);
     }
   }
 
@@ -419,44 +410,41 @@ class ActualData extends Component {
     }
   }
 
-  writeUrl = (row,col,urlf) => {
+  writeUrl = (row, col, urlf) => {
     var dupdata = this.state.data;
     dupdata[row][col]["url"] = urlf;
-    this.setState({data: dupdata});
+    this.setState({ data: dupdata });
   }
 
-  runUrl = (row,col) => {
+  runUrl = (row, col) => {
     var dupdata = this.state.data;
     var target = dupdata[row][col]["url"];
-    var urlTest = target.slice(4,target.indexOf(','));
-    var timer = target.slice(target.indexOf(',')+1,target.indexOf(')'));
+    var urlTest = target.slice(4, target.indexOf(','));
+    var timer = target.slice(target.indexOf(',') + 1, target.indexOf(')'));
     var response;
     var me = this;
-    if(target.length > 0)
-    {
+    if (target.length > 0) {
       axios.get(urlTest)
-      .then(data => {
-        if(data['status'] == 200)
-        {
-          response = data['data']['a'];
-          dupdata[row][col]["value"] = response;
-          this.setState({data: dupdata});
-        }
-        else
-        {
-          dupdata[row][col]["value"] = "ERROR!";
-          dupdata[row][col]["url"] = "";
-          this.setState({data: dupdata});
-        }
-      })
-      .catch(function (error) {
+        .then(data => {
+          if (data['status'] == 200) {
+            response = data['data']['a'];
+            dupdata[row][col]["value"] = response;
+            this.setState({ data: dupdata });
+          }
+          else {
+            dupdata[row][col]["value"] = "ERROR!";
+            dupdata[row][col]["url"] = "";
+            this.setState({ data: dupdata });
+          }
+        })
+        .catch(function (error) {
           console.log(error);
           dupdata[row][col]["value"] = "ERROR!";
           dupdata[row][col]["url"] = "";
           dupdata[row][col]["color"] = "red";
-          me.setState({data: dupdata});
+          me.setState({ data: dupdata });
           clearInterval(me.interval);
-      });
+        });
     }
   }
 
@@ -471,6 +459,7 @@ class ActualData extends Component {
     }
     this.setState({ data: dupdata });
     const request = axios.post(urla, this.state.data);
+    this.loadData();
   }
 
   addRow = () => {
@@ -493,6 +482,166 @@ class ActualData extends Component {
     this.setState({ data: dupdata });
   }
 
+  delRow = (rowNo) => {
+    var data = this.state.data;
+    data[rowNo].map(function (col, j) {
+      if (col["dep"].length > 0) {
+        for (var i = 0; i < col["dep"].length; i++) {
+          var rows = col["dep"][i]["row"];
+          var cols = col["dep"][i]["column"];
+
+          data[rows][cols]["fx"]["formula"] = "#REF";
+          data[rows][cols]["value"] = "#REF";
+
+          if (data[rows][cols]["fx"]["op1i"] == rowNo) {
+            data[rows][cols]["fx"]["op1i"] = "";
+            data[rows][cols]["fx"]["op1j"] = "";
+          }
+          else {
+            data[rows][cols]["fx"]["op2i"] = "";
+            data[rows][cols]["fx"]["op2j"] = "";
+          }
+        }
+      }
+      if (Object.keys(col["fx"]).length > 0) {
+        if (col["fx"]["op1i"]) {
+          var op1i = col["fx"]["op1i"];
+          var op1j = col["fx"]["op1j"];
+          data[op1i][op1j]["dep"].map(function (depRow, l) {
+            if (depRow["row"] == rowNo) {
+              data[op1i][op1j]["dep"].splice(l, 1);
+            }
+          });
+        }
+        if (col["fx"]["op2i"]) {
+          var op2i = col["fx"]["op2i"];
+          var op2j = col["fx"]["op2j"];
+          data[op2i][op2j]["dep"].map(function (depRow, l) {
+            if (depRow["row"] == rowNo) {
+              data[op2i][op2j]["dep"].splice(l, 1);
+            }
+          });
+        }
+      }
+    });
+    data.map(function (row, i) {
+      row.map(function (col, j) {
+        if (col["dep"].length > 0) {
+          for (var z = 0; z < col["dep"].length; z++) {
+            if (col["dep"][z]["row"] > rowNo) {
+              col["dep"][z]["row"] = col["dep"][z]["row"] - 1;
+            }
+          }
+        }
+
+        if (Object.keys(col["fx"]).length > 0) {
+          if (col["fx"]["op1i"] > rowNo) {
+            col["fx"]["op1i"] = col["fx"]["op1i"] - 1;
+            var temp = col["fx"]["formula"];
+            if (temp.indexOf("+") > -1)
+              var oper = temp.indexOf("+");
+            else
+              var oper = temp.indexOf("-");
+            col["fx"]["formula"] = temp.substring(0, 3) + (col["fx"]["op1i"] + 1) + temp.substring(oper, temp.length);
+          }
+          if (col["fx"]["op2i"] > rowNo) {
+            col["fx"]["op2i"] = col["fx"]["op2i"] - 1;
+            var temp = col["fx"]["formula"];
+            if (temp.indexOf("+") > -1)
+              var oper = temp.indexOf("+");
+            else
+              var oper = temp.indexOf("-");
+            col["fx"]["formula"] = temp.substring(0, oper + 2) + (col["fx"]["op2i"] + 1) + ")";
+          }
+        }
+      });
+    });
+
+    data.splice(rowNo, 1);
+    this.setState({ data });
+  }
+
+  delCol = (colNo) => {
+    var data = this.state.data;
+    var me = this
+    data.map(function (row, i) {
+      if (row[colNo]["dep"].length > 0) {
+        for (var j = 0; j < row[colNo]["dep"].length; j++) {
+          var rows = row[colNo]["dep"][j]["row"];
+          var cols = row[colNo]["dep"][j]["column"];
+          data[rows][cols]["fx"]["formula"] = "#REF";
+          data[rows][cols]["value"] = "#REF";
+
+          if (data[rows][cols]["fx"]["op1j"] == colNo) {
+            data[rows][cols]["fx"]["op1i"] = "";
+            data[rows][cols]["fx"]["op1j"] = "";
+          }
+          else {
+            data[rows][cols]["fx"]["op2i"] = "";
+            data[rows][cols]["fx"]["op2j"] = "";
+          }
+        }
+      }
+
+      if (Object.keys(row[colNo]["fx"]).length > 0) {
+        if (row[colNo]["fx"]["op1i"]) {
+          var op1i = row[colNo]["fx"]["op1i"];
+          var op1j = row[colNo]["fx"]["op1j"];
+          data[op1i][op1j]["dep"].map(function (depRow, l) {
+            if (depRow["column"] == colNo) {
+              data[op1i][op1j]["dep"].splice(l, 1);
+            }
+          });
+        }
+        if (row[colNo]["fx"]["op2i"]) {
+          var op2i = row[colNo]["fx"]["op2i"];
+          var op2j = row[colNo]["fx"]["op2j"];
+          data[op2i][op2j]["dep"].map(function (depRow, l) {
+            if (depRow["column"] == colNo) {
+              data[op2i][op2j]["dep"].splice(l, 1);
+            }
+          });
+        }
+      }
+    });
+
+    data.map(function (row, i) {
+      row.map(function (col, j) {
+        if (Object.keys(col["fx"]).length > 0) {
+          if (col["fx"]["op1j"] > colNo) {
+            col["fx"]["op1j"] = col["fx"]["op1j"] - 1;
+            var newCol = me.alpha[col["fx"]["op1j"]];
+            col["fx"]["formula"] = col["fx"]["formula"].substr(0, 2) + newCol + col["fx"]["formula"].substr(3, col["fx"]["formula"].length);
+          }
+          if (col["fx"]["op2j"] > colNo) {
+            col["fx"]["op2j"] = col["fx"]["op2j"] - 1;
+            var temp = col["fx"]["formula"];
+            if (temp.indexOf("+") > -1)
+              var oper = temp.indexOf("+") + 1;
+            else
+              var oper = temp.indexOf("-") + 1;
+            var newCol = me.alpha[col["fx"]["op2j"]];
+            col["fx"]["formula"] = col["fx"]["formula"].substr(0, oper) + newCol + col["fx"]["formula"].substr(oper + 1, col["fx"]["formula"].length);
+          }
+        }
+
+        if (col["dep"].length > 0) {
+          for (var z = 0; z < col["dep"].length; z++) {
+            if (col["dep"][z]["column"] > colNo) {
+              col["dep"][z]["column"] = col["dep"][z]["column"] - 1;
+            }
+          }
+        }
+      });
+    });
+
+    data.map(function (row, i) {
+      row.splice(colNo, 1);
+    });
+
+    this.setState({data});
+  }
+
   renderHead = (data) => {
     var dupData = data;
     if (dupData[0]) {
@@ -500,7 +649,7 @@ class ActualData extends Component {
       var a = [<th key="blank"></th>];
       var me = this;
       for (var i = 0; i < dupData[0].length; i++) {
-        a.push(<th key={i}>{this.alpha[i]}</th>);
+        a.push(<th key={i}>{this.alpha[i]} <button style={{ color: 'red' }} id={i} onClick={me.delCol.bind(me,i)} >X</button></th>);
       }
       return (<tr key="header">{a}</tr>);
     }
@@ -524,11 +673,10 @@ class ActualData extends Component {
             onFocus={this.checkFocus.bind(this)}
             onBlur={this.checkBlur.bind(this, i, j, "zaq")}
             ref={this.refCallback}
-          
           >{dupdata[j]['value']}</td>
         );
       }
-      b.push(<tr key={i}>{a}</tr>);
+      b.push(<tr key={i}>{a} <td id="button"><button id={i} style={{ color: 'red' }} onClick={this.delRow.bind(this, i)}>X</button></td></tr>);
       a = [];
     }
     return b;
@@ -538,8 +686,8 @@ class ActualData extends Component {
     var col = value.c;
     var row = value.r;
     var colName = this.alpha[col];
-    var rowNo = Number(row)+1;
-    var id = colName+rowNo;
+    var rowNo = Number(row) + 1;
+    var id = colName + rowNo;
     var elem = document.getElementById(id);
     elem.innerText = value.v;
   }
@@ -550,7 +698,7 @@ class ActualData extends Component {
         <button id="save" onClick={this.saveData.bind(this)}>SAVE</button>
         <button id="addRow" onClick={this.addRow.bind(this)}>ADD ROW</button>
         <button id="addCol" onClick={this.addColumn.bind(this)}>ADD COLUMN</button>
-        <FxBar fvalue={this.state.ftrans} getfvalue={this.fbarSet} fxblur={this.checkBlur}/>
+        <FxBar fvalue={this.state.ftrans} getfvalue={this.fbarSet} fxblur={this.checkBlur} />
         <table>
           <thead>{this.renderHead(this.state.data)}</thead>
           <tbody>{this.renderData(this.state.data)}</tbody>
