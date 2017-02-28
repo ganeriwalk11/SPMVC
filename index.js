@@ -152,7 +152,7 @@ class ActualData extends Component {
     data[i][j]["color"] = color;
     data[i][j]['value'] = ans;
 
-    this.setState({data});
+    this.setState({ data });
   }
 
   checkFocus = (event) => {
@@ -167,11 +167,11 @@ class ActualData extends Component {
       target = q;
     else
       target = event.target.innerText;
-    console.log(target[0], target[1], target[target.length - 1]);
     if (dupdata[i][j]["value"] != target) {
       if (this.prevValue[this.prevValue.length - 1] != target) {
         if (target == parseInt(target, 10) || target == "") {
           dupdata[i][j]["color"] = "darkgreen";
+          dupdata[i][j]["value"] = target;
           this.setState({ data: dupdata });
           if (dupdata[i][j]["dep"].length) {
             var deep = [];
@@ -184,57 +184,146 @@ class ActualData extends Component {
             }
           }
         }
-        else if (target[0] == '=' && target[1] == '(' && target[target.length - 1] == ')') {
-          if (target[2] == parseInt(target[2], 10)) {
-            var z = 2, num = "";
-            for (z = 2; z < target.length; z++) {
-              if (target[z] != '+' && target[z] != '-' && target[z] != ')') {
-                num = num + target[z];
+        else {
+          if (target[0] == '=' && target[1] == '(' && target[target.length - 1] == ')') {
+            if (target[2] == parseInt(target[2], 10)) {
+              var z = 2, num = "";
+              for (z = 2; z < target.length; z++) {
+                if (target[z] != '+' && target[z] != '-' && target[z] != ')') {
+                  num = num + target[z];
+                }
+                else
+                  break;
               }
-              else
-                break;
-            }
-            num = Number(num);
-            var op1 = num;
-            if (target[z] == ')') {
-              target = num;
-              this.stringColor(i, j, target, "darkblue");
-              var me = this;
-              setTimeout(function () { me.changeColor(i, j, "black"); }, 500);
-            }
-          }
-
-          if (target[z] == '+' || target[z] == '-') {
-            var operator = target[z];
-            z = z + 1;
-            if (target[z] == parseInt(target[z], 10)) {
-              let c = z, numb = "";
-              while (target[c] != ')') {
-                numb = numb + target[c++];
+              num = Number(num);
+              var op1 = num;
+              if (target[z] == ')') {
+                target = num;
+                this.stringColor(i, j, target, "darkblue");
+                var me = this;
+                setTimeout(function () { me.changeColor(i, j, "black"); }, 500);
               }
-              numb = Number(numb);
-              var op2 = numb;
-              if (operator == '+')
-                target = op1 + op2;
-              else
-                target = op1 - op2;
-              this.stringColor(i, j, target, "darkblue");
-              var me = this;
-              setTimeout(function () { me.changeColor(i, j, "black"); }, 500);
+              else {
+                if (target[z] == '+' || target[z] == '-') {
+                  var operator = target[z];
+                  z = z + 1;
+                  if (target[z] == parseInt(target[z], 10)) {
+                    let c = z, numb = "";
+                    while (target[c] != ')') {
+                      numb = numb + target[c++];
+                    }
+                    numb = Number(numb);
+                    var op2 = numb;
+                    if (operator == '+')
+                      target = op1 + op2;
+                    else
+                      target = op1 - op2;
+                    this.stringColor(i, j, target, "darkblue");
+                    var me = this;
+                    setTimeout(function () { me.changeColor(i, j, "black"); }, 500);
+                  }
+                  else if (this.alpha.indexOf(target[z]) > -1 && this.alpha.indexOf(target[z]) < len) {
+                    let k = z + 1, nu = "";
+                    while (target[k] !== ')') {
+                      nu = nu + target[k++];
+                    }
+                    nu = Number(nu);
+                    if (dupdata[nu - 1]) {
+                      var op2i = nu - 1;
+                      var op2j = this.alpha.indexOf(target[z]);
+                      this.applyFunc(j, target, i, "darkblue", op1, "", "", "", op2i, op2j, operator);
+                      var me = this;
+                      setTimeout(function () { me.changeColor(i, j, "black"); }, 500);
+                    }
+                    else {
+                      this.stringColor(i, j, target, "darkblue");
+                      var me = this;
+                      setTimeout(function () { me.changeColor(i, j, "black"); }, 500);
+                    }
+                  }
+                  else {
+                    this.stringColor(i, j, target, "darkblue");
+                    var me = this;
+                    setTimeout(function () { me.changeColor(i, j, "black"); }, 500);
+                  }
+                }
+                else {
+                  this.stringColor(i, j, target, "darkblue");
+                  var me = this;
+                  setTimeout(function () { me.changeColor(i, j, "black"); }, 500);
+                }
+              }
             }
-          }
-          else if (this.alpha.indexOf(target[z]) > -1 && this.alpha.indexOf(target[z]) < len) {
-            let k = z + 1, nu = "";
-            while (target[k] !== ')') {
-              nu = nu + target[k++];
-            }
-            nu = Number(nu);
-            if (dupdata[nu - 1]) {
-              var op2i = nu - 1;
-              var op2j = this.alpha.indexOf(target[z]);
-              this.applyFunc(j, target, i, "darkblue", op1, "", "", "", op2i, op2j, operator);
-              var me = this;
-              setTimeout(function () { me.changeColor(i, j, "black"); }, 500);
+            else if (this.alpha.indexOf(target[2]) > -1 && this.alpha.indexOf(target[2]) < len) {
+              let z = 3, num = "";
+              for (z = 3; z < target.length; z++) {
+                if ((target[z] !== '+') && (target[z] !== '-') && (target[z] !== ')')) {
+                  num = num + target[z];
+                }
+                else
+                  break;
+              }
+              num = Number(num);
+              if (dupdata[num - 1]) {
+                var op1i = num - 1;
+                var op1j = this.alpha.indexOf(target[2]);
+                if (target[z] == ')') {
+                  this.applyFunc(j, target, i, "darkblue", "", "", op1i, op1j, "", "", "");
+                  var me = this;
+                  setTimeout(function () { me.changeColor(i, j, "black"); }, 500);
+                }
+                else {
+                  if (target[z] == '+' || target[z] == '-') {
+                    var operator = target[z];
+                    z = z + 1;
+                    if (target[z] == parseInt(target[z], 10)) {
+                      let c = z, numb = "";
+                      while (target[c] !== ')') {
+                        numb = numb + target[c++];
+                      }
+                      numb = Number(numb);
+                      var op2 = numb;
+                      this.applyFunc(j, target, i, "darkblue", "", op2, op1i, op1j, "", "", operator);
+                      var me = this;
+                      setTimeout(function () { me.changeColor(i, j, "black"); }, 500);
+                    }
+                    else if (this.alpha.indexOf(target[z]) > -1 && this.alpha.indexOf(target[z]) < len) {
+                      let k = z + 1, nu = "";
+                      while (target[k] !== ')') {
+                        nu = nu + target[k++];
+                      }
+                      nu = Number(nu);
+                      if (dupdata[nu - 1]) {
+                        var op2i = nu - 1;
+                        var op2j = this.alpha.indexOf(target[z]);
+                        this.applyFunc(j, target, i, "darkblue", "", "", op1i, op1j, op2i, op2j, operator);
+                        var me = this;
+                        setTimeout(function () { me.changeColor(i, j, "black"); }, 500);
+                      }
+                      else {
+                        this.stringColor(i, j, target, "darkblue");
+                        var me = this;
+                        setTimeout(function () { me.changeColor(i, j, "black"); }, 500);
+                      }
+                    }
+                    else {
+                      this.stringColor(i, j, target, "darkblue");
+                      var me = this;
+                      setTimeout(function () { me.changeColor(i, j, "black"); }, 500);
+                    }
+                  }
+                  else {
+                    this.stringColor(i, j, target, "darkblue");
+                    var me = this;
+                    setTimeout(function () { me.changeColor(i, j, "black"); }, 500);
+                  }
+                }
+              }
+              else {
+                this.stringColor(i, j, target, "darkblue");
+                var me = this;
+                setTimeout(function () { me.changeColor(i, j, "black"); }, 500);
+              }
             }
             else {
               this.stringColor(i, j, target, "darkblue");
@@ -242,14 +331,25 @@ class ActualData extends Component {
               setTimeout(function () { me.changeColor(i, j, "black"); }, 500);
             }
           }
-          else {
-            this.stringColor(i, j, target, "darkblue");
-            var me = this;
-            setTimeout(function () { me.changeColor(i, j, "black"); }, 500);
-          }
-        }
-        else {
+          else if (target[0] == 'u' && target[1] == 'r' && target[2] == 'l') {
+            var regex = new RegExp("^(?!mailto:)(?:(?:http|https|ftp)://)(?:\\S+(?::\\S*)?@)?(?:(?:(?:[1-9]\\d?|1\\d\\d|2[01]\\d|22[0-3])(?:\\.(?:1?\\d{1,2}|2[0-4]\\d|25[0-5])){2}(?:\\.(?:[0-9]\\d?|1\\d\\d|2[0-4]\\d|25[0-4]))|(?:(?:[a-z\\u00a1-\\uffff0-9]+-?)*[a-z\\u00a1-\\uffff0-9]+)(?:\\.(?:[a-z\\u00a1-\\uffff0-9]+-?)*[a-z\\u00a1-\\uffff0-9]+)*(?:\\.(?:[a-z\\u00a1-\\uffff]{2,})))|localhost)(?::\\d{2,5})?(?:(/|\\?|#)[^\\s]*)?$");
 
+            var urlTest = target.slice(4, target.indexOf(','));
+            var timer = target.slice(target.indexOf(',') + 1, target.indexOf(')'));
+            if (regex.test(urlTest)) {
+              this.writeUrl(i, j, target, timer);
+              this.runUrl(i, j);
+              setInterval(() => { this.runUrl(i, j) }, timer);
+            }
+            else {
+              this.stringColor(i, j, target, "red");
+              var me = this;
+              setTimeout(function () { me.props.changeColor(i, j, "black"); }, 500);
+            }
+          }
+          else {
+            this.stringColor(i, j, target, "red");
+          }
         }
       }
     }
